@@ -1,0 +1,28 @@
+body { margin: 0; font-family: system-ui, Arial, sans-serif; background: #0b0c10; color: #e8e8e8; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+
+.top { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.select { display: grid; gap: 6px; font-size: 14px; }
+select { border-radius: 10px; border: 1px solid #2a3144; background: #0f1220; color: #e8e8e8; padding: 8px; }
+
+.chat { background: #12141a; border-radius: 12px; padding: 12px; min-height: 55vh; overflow: auto; }
+.msg { padding: 10px 12px; border-radius: 12px; margin: 10px 0; line-height: 1.35; }
+.msg.user { background: #1d2433; }
+.msg.bot { background: #151a24; border: 1px solid #232a3a; }
+
+.composer { display: grid; grid-template-columns: 1fr 120px; gap: 10px; margin-top: 12px; }
+textarea { width: 100%; border-radius: 12px; border: 1px solid #2a3144; background: #0f1220; color: #e8e8e8; padding: 10px; }
+button { border-radius: 12px; border: 0; background: #4b7bec; color: white; font-weight: 700; cursor: pointer; padding: 10px 12px; }
+button.secondary { background: #2a3144; }
+button:disabled, textarea:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ---- impressão (PDF simples via Print) ---- */
+@media print {
+  body { background: #fff; color: #000; }
+  .controls, .composer { display: none !important; }
+  .chat { border: 0; background: transparent; padding: 0; }
+  .msg { border: 0; background: transparent !important; padding: 0; margin: 10px 0; }
+  .msg.user::before { content: "Você: "; font-weight: 700; }
+  .msg.bot::before { content: "ELIZA: "; font-weight: 700; }
+}
