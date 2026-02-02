@@ -23,26 +23,41 @@
           </select>
         </label>
 
-        <!-- Botão para transparência: reabrir termo sem travar a experiência -->
-        <button id="openTerms" class="secondary">Termo</button>
+        <button id="openTerms" class="secondary" type="button">Termo</button>
 
-        <button id="restart" class="secondary">Reiniciar</button>
-        <button id="exportTxt" class="secondary">Exportar TXT</button>
-        <button id="exportPdf" class="secondary">Exportar PDF</button>
-        <button id="emailDraft" class="secondary">Abrir e-mail</button>
+        <button id="restart" class="secondary" type="button">Reiniciar</button>
+        <button id="exportTxt" class="secondary" type="button">Exportar TXT</button>
+        <button id="exportPdf" class="secondary" type="button">Exportar PDF</button>
+        <button id="emailDraft" class="secondary" type="button">Abrir e-mail</button>
       </div>
     </header>
 
     <section id="chat" class="chat" aria-live="polite"></section>
 
     <footer class="composer">
-      <textarea id="input" rows="3" placeholder="Escreva aqui (1–3 frases). Enter envia. Shift+Enter quebra linha."></textarea>
-      <button id="send">Enviar</button>
+      <textarea
+        id="input"
+        rows="3"
+        placeholder="Escreva aqui (1–3 frases). Enter envia. Shift+Enter quebra linha."
+        autocomplete="off"
+        autocapitalize="sentences"
+        spellcheck="true"
+      ></textarea>
+      <button id="send" type="button">Enviar</button>
     </footer>
   </main>
 
   <!-- Modal: Termo de Uso (aceite obrigatório no primeiro uso) -->
-  <div id="consentOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+  <div
+    id="consentOverlay"
+    class="overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="consentTitle"
+    aria-describedby="consentBody"
+    tabindex="-1"
+    hidden
+  >
     <div class="modal">
       <div class="modalHead">
         <h2 id="consentTitle">Termo de Uso — IZA (resumo)</h2>
@@ -100,8 +115,8 @@
         </label>
 
         <div class="btnRow">
-          <button id="consentDecline" class="secondary">Não aceitar</button>
-          <button id="consentAccept" disabled>Continuar</button>
+          <button id="consentDecline" class="secondary" type="button">Não aceitar</button>
+          <button id="consentAccept" type="button" disabled>Continuar</button>
         </div>
       </div>
     </div>
