@@ -10,6 +10,37 @@ const state = {
   started: false,
 };
 
+// ---- Consentimento (Termo + LGPD) ----
+const CONSENT_KEY = "iza_consent_v1";
+const PEDAGOGIC_KEY = "iza_pedagogic_consent_v1";
+
+function hasConsent() {
+  return localStorage.getItem(CONSENT_KEY) === "accepted";
+}
+
+function setConsentAccepted() {
+  localStorage.setItem(CONSENT_KEY, "accepted");
+}
+
+function setPedagogicConsent(isAccepted) {
+  localStorage.setItem(PEDAGOGIC_KEY, isAccepted ? "accepted" : "declined");
+}
+
+export function allowPedagogicUse() {
+  return localStorage.getItem(PEDAGOGIC_KEY) === "accepted";
+}
+
+function blockUI(isBlocked) {
+  $("#input").disabled = isBlocked;
+  $("#send").disabled = isBlocked;
+  $("#restart").disabled = isBlocked;
+  $("#exportTxt").disabled = isBlocked;
+  $("#exportPdf").disabled = isBlocked;
+  $("#emailDraft").disabled = isBlocked;
+  $("#mode").disabled = isBlocked;
+  $("#openTerms").disabled = false; // transparência sempre disponível
+}
+
 function normalize(text) {
   return text.trim().replace(/\s+/g, " ");
 }
@@ -58,7 +89,7 @@ function buildStagePrompt() {
   const mode = currentMode();
   const stage = currentStage();
   const total = mode.stages.length;
-  return `**Etapa ${stage.id}/${total — 0 ? total : total} — ${stage.title}**\n\n${stage.prompt}`;
+  return `**Etapa ${stage.id}/${total} — ${stage.title}**\n\n${stage.prompt}`;
 }
 
 // conexão curta: no máximo 2 recortes
@@ -151,14 +182,17 @@ function reset() {
 function exportText() {
   const mode = currentMode();
   const lines = [];
-  lines.push(`ELIZA de Escrita — ${mode.name}`);
+  lines.push(`IZA — Escrita Reflexiva — ${mode.name}`);
+  lines.push(`Site: www.cordel2pontozero.com`);
   lines.push(`Data: ${new Date().toLocaleString()}`);
   lines.push("");
+
   for (const h of state.history) {
     lines.push(`[${h.stageTitle}]`);
     lines.push(h.userText);
     lines.push("");
   }
+
   lines.push("=== Roteiro final ===");
   lines.push(buildFinalWritingPlan().replace(/\*\*/g, ""));
   lines.push("");
@@ -167,7 +201,7 @@ function exportText() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `eliza-escrita-${state.modeId}.txt`;
+  a.download = `iza-escrita-${state.modeId}.txt`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -175,28 +209,118 @@ function exportText() {
 }
 
 function exportPdfSimple() {
-  // PDF “simples” = usa a impressão do navegador (Ctrl+P) com @media print
+  // PDF “simples” = usa a impressão do navegador com @media print
   window.print();
 }
 
 function openEmailDraft() {
   const mode = currentMode();
-  const subject = encodeURIComponent(`ELIZA de Escrita — ${mode.name}`);
+  const subject = encodeURIComponent(`IZA — Escrita Reflexiva — ${mode.name}`);
   const body = encodeURIComponent(
     state.history
       .map((h) => `${h.stageTitle}:\n${h.userText}\n`)
       .join("\n") + "\n" + buildFinalWritingPlan().replace(/\*\*/g, "")
   );
 
-  // Você pode colocar seu e-mail aqui (ou deixar em branco):
-  const to = ""; // ex: "carlos@exemplo.com"
+  // opcional: deixar vazio para o usuário escolher o destinatário
+  const to = "";
   window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+}
+
+function closeConsentOverlay() {
+  $("#consentOverlay").classList.remove("show");
+}
+
+// Modal com 2 modos:
+// - required: bloqueia e exige aceite do termo
+// - view: só mostra (transparência), sem bloquear
+function showConsentModal(mode = "required") {
+  const overlay = $("#consentOverlay");
+  const checkWrap = $("#consentCheck").parentElement;
+  const pedWrap = $("#pedagogicCheck").parentElement;
+
+  const isViewOnly = mode === "view";
+
+  overlay.classList.add("show");
+
+  // Ajustes de UI conforme modo
+  $(".modalSub").textContent = isViewOnly
+    ? "Transparência: você pode rever este termo a qualquer momento."
+    : "Para usar a IZA, é preciso aceitar este termo.";
+
+  // Em view-only: esconder checkboxes e botão continuar; botão vira "Fechar"
+  checkWrap.style.display = isViewOnly ? "none" : "flex";
+  pedWrap.style.display = isViewOnly ? "none" : "flex";
+
+  const btnDecline = $("#consentDecline");
+  const btnAccept = $("#consentAccept");
+
+  btnDecline.textContent = isViewOnly ? "Fechar" : "Não aceitar";
+  btnAccept.style.display = isViewOnly ? "none" : "inline-block";
+
+  // Evita acumular listeners: clona botões e inputs
+  const oldCheck = $("#consentCheck");
+  const oldPed = $("#pedagogicCheck");
+  const oldDecline = $("#consentDecline");
+  const oldAccept = $("#consentAccept");
+
+  const newCheck = oldCheck.cloneNode(true);
+  const newPed = oldPed.cloneNode(true);
+  const newDecline = oldDecline.cloneNode(true);
+  const newAccept = oldAccept.cloneNode(true);
+
+  oldCheck.parentElement.replaceChild(newCheck, oldCheck);
+  oldPed.parentElement.replaceChild(newPed, oldPed);
+  oldDecline.parentElement.replaceChild(newDecline, oldDecline);
+  oldAccept.parentElement.replaceChild(newAccept, oldAccept);
+
+  const check = $("#consentCheck");
+  const pedagogic = $("#pedagogicCheck");
+  const decline = $("#consentDecline");
+  const accept = $("#consentAccept");
+
+  if (!isViewOnly) {
+    check.checked = false;
+    pedagogic.checked = false;
+    accept.disabled = true;
+
+    blockUI(true);
+
+    check.addEventListener("change", () => {
+      accept.disabled = !check.checked;
+    });
+
+    accept.addEventListener("click", () => {
+      setConsentAccepted();
+      setPedagogicConsent(pedagogic.checked);
+      closeConsentOverlay();
+      blockUI(false);
+      reset();
+    });
+
+    decline.addEventListener("click", () => {
+      addMessage(
+        "bot",
+        "Sem o aceite do Termo de Uso, a IZA não pode iniciar.\n\n" +
+          "Se você quiser usar a IZA, marque a caixa de concordância e toque em **Continuar**."
+      );
+    });
+  } else {
+    // view-only
+    decline.addEventListener("click", () => {
+      closeConsentOverlay();
+    });
+  }
 }
 
 function wireUI() {
   $("#mode").addEventListener("change", (e) => {
     state.modeId = e.target.value;
     reset();
+  });
+
+  $("#openTerms").addEventListener("click", () => {
+    showConsentModal(hasConsent() ? "view" : "required");
   });
 
   $("#restart").addEventListener("click", reset);
@@ -222,7 +346,13 @@ function wireUI() {
 function start() {
   wireUI();
   state.modeId = $("#mode").value;
-  reset();
+
+  if (hasConsent()) {
+    reset();
+  } else {
+    addMessage("bot", "Antes de começar, preciso que você aceite o Termo de Uso.");
+    showConsentModal("required");
+  }
 }
 
 start();
