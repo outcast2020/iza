@@ -251,7 +251,7 @@ function nextTurn(userText) {
   let reply = `${mirror}\n\n${nextPrompt}`;
 
   // adiciona tempero (opcional)
-  reply += maybeAddSpice();
+  reply += maybeAddSpice(stage.id);
 
   // conectar a partir da etapa 2 (conforme stages.js)
   if (stage.connect) reply += connectTwoSnippets();
