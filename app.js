@@ -128,28 +128,66 @@ function pickSpiceFromAllowed(allowedTags) {
   return fallback;
 }
 
-function maybeAddSpice() {
-  // Frequência: ajuste aqui
-  const chance = state.modeId === "path7" ? 0.45 : 0.25; // 7 etapas mais “temperado”
-  // sempre tempera
-// (ou, se preferir: sempre em path7 e às vezes em sprint)
-if (state.modeId !== "path7" && Math.random() > chance) return "";
+function pickSpiceFromAllowed(allowedTags) {
+  // tenta algumas vezes até acertar um tempero do conjunto permitido
+  for (let i = 0; i < 14; i++) {
+    const spice = pickSpice(state.lastSpiceTag);
+    if (allowedTags.includes(spice.tag)) {
+      state.lastSpiceTag = spice.tag;
+      return spice;
+    }
+  }
+  // fallback: qualquer um (ainda evita repetir tag imediatamente)
+  const fallback = pickSpice(state.lastSpiceTag);
+  state.lastSpiceTag = fallback.tag;
+  return fallback;
+}
 
-  // Você pode decidir quando começar a temperar (ex.: após a primeira resposta)
-  const n = stageNumberForSpice();
-  if (n < 1) return "";
+function allowedSpiceTagsForStage(modeId, stageId) {
+  // Mapeamento coerente com o seu stages.js
+  if (modeId === "sprint") {
+    switch (stageId) {
+      case 1: // Foco (núcleo)
+        return ["Drummond", "Ritmo"];
+      case 2: // Tensão
+        return ["Drummond", "Voz"];
+      case 3: // Concretização (exemplo/cena)
+        return ["Imagem", "Adélia"];
+      case 4: // Tese
+        return ["Ritmo", "Voz"];
+      default:
+        return ["Ritmo", "Voz", "Imagem"];
+    }
+  }
 
-  // Curadoria por etapa
-  // Etapa 1 (núcleo) → Drummond / Corte (usei Ritmo como “corte”)
-  // Etapa 2 (exemplo) → Imagem / Adélia
-  // Etapa 3 (tese) → Ritmo / Voz
-  // Etapa 4+ (revisão) → Cuidado / Evaristo
-  let allowed;
-  if (n === 1) allowed = ["Drummond", "Ritmo"];
-  else if (n === 2) allowed = ["Imagem", "Adélia"];
-  else if (n === 3) allowed = ["Ritmo", "Voz"];
-  else allowed = ["Cuidado", "Evaristo"];
+  // path7
+  switch (stageId) {
+    case 1: // Tema-núcleo
+      return ["Drummond", "Ritmo"];
+    case 2: // Tensão / problema
+      return ["Drummond", "Voz"];
+    case 3: // Intenção do autor
+      return ["Voz", "Ritmo"];
+    case 4: // Cena concreta
+      return ["Imagem", "Adélia"];
+    case 5: // Suposição escondida
+      return ["Cuidado", "Evaristo"];
+    case 6: // Contra-ideia
+      return ["Cuidado", "Evaristo"];
+    case 7: // Tese + próximo parágrafo
+      return ["Ritmo", "Voz", "Drummond"];
+    default:
+      return ["Ritmo", "Voz", "Imagem"];
+  }
+}
 
+function maybeAddSpice(lastAnsweredStageId) {
+  // Frequência: mais “temperado” no path7
+  const chance = state.modeId === "path7" ? 0.45 : 0.25;
+  if (Math.random() > chance) return "";
+
+  // Curadoria por etapa (baseada no stages.js)
+  const allowed = allowedSpiceTagsForStage(state.modeId, lastAnsweredStageId);
   const spice = pickSpiceFromAllowed(allowed);
 
   return `\n\n_<strong>Tempero Iza</strong> (${spice.tag}):_ ${spice.text}`;
