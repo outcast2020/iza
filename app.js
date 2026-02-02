@@ -106,23 +106,49 @@ function connectTwoSnippets() {
 }
 
 // “Tempero” literário (sem citações literais)
+function stageNumberForSpice() {
+  // Nós chamamos o tempero após incrementar stageIndex em nextTurn(),
+  // então a "etapa recém-respondida" é state.stageIndex (1-based conceitual).
+  // Ex.: após responder etapa 1, stageIndex vira 1.
+  return state.stageIndex; // 1,2,3...
+}
+
+function pickSpiceFromAllowed(allowedTags) {
+  // tenta algumas vezes até acertar um tempero do conjunto permitido
+  for (let i = 0; i < 12; i++) {
+    const spice = pickSpice(state.lastSpiceTag);
+    if (allowedTags.includes(spice.tag)) {
+      state.lastSpiceTag = spice.tag;
+      return spice;
+    }
+  }
+  // fallback: qualquer um (mas ainda evita repetir a mesma tag imediatamente)
+  const fallback = pickSpice(state.lastSpiceTag);
+  state.lastSpiceTag = fallback.tag;
+  return fallback;
+}
+
 function maybeAddSpice() {
-  // Ajuste aqui a frequência:
-  const chance = 0.30; // 30%
-
-  // Você pode decidir limitar a aparição:
-  // - só no modo path7
-  // - ou só a partir de certa etapa
-  // Vou deixar flexível:
-  const shouldConsider =
-    (state.modeId === "path7" && state.stageIndex >= 1) ||
-    (state.modeId === "sprint" && state.stageIndex >= 1);
-
-  if (!shouldConsider) return "";
+  // Frequência: ajuste aqui
+  const chance = state.modeId === "path7" ? 0.45 : 0.25; // 7 etapas mais “temperado”
   if (Math.random() > chance) return "";
 
-  const spice = pickSpice(state.lastSpiceTag);
-  state.lastSpiceTag = spice.tag;
+  // Você pode decidir quando começar a temperar (ex.: após a primeira resposta)
+  const n = stageNumberForSpice();
+  if (n < 1) return "";
+
+  // Curadoria por etapa
+  // Etapa 1 (núcleo) → Drummond / Corte (usei Ritmo como “corte”)
+  // Etapa 2 (exemplo) → Imagem / Adélia
+  // Etapa 3 (tese) → Ritmo / Voz
+  // Etapa 4+ (revisão) → Cuidado / Evaristo
+  let allowed;
+  if (n === 1) allowed = ["Drummond", "Ritmo"];
+  else if (n === 2) allowed = ["Imagem", "Adélia"];
+  else if (n === 3) allowed = ["Ritmo", "Voz"];
+  else allowed = ["Cuidado", "Evaristo"];
+
+  const spice = pickSpiceFromAllowed(allowed);
 
   return `\n\n_<strong>Tempero Iza</strong> (${spice.tag}):_ ${spice.text}`;
 }
