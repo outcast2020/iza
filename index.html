@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>ELIZA de Escrita (PT) — Sprint & 7 Etapas</title>
+  <title>IZA — Escrita Reflexiva (PT) | Sprint & 7 Etapas</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <main class="wrap">
     <header class="top">
       <div>
-        <h1>ELIZA de Escrita</h1>
+        <h1>IZA — Escrita Reflexiva</h1>
         <p>Perguntas a partir do que você diz — treino de pensar para escrever.</p>
       </div>
 
@@ -22,6 +22,9 @@
             <option value="path7">Percurso (7 etapas)</option>
           </select>
         </label>
+
+        <!-- Botão para transparência: reabrir termo sem travar a experiência -->
+        <button id="openTerms" class="secondary">Termo</button>
 
         <button id="restart" class="secondary">Reiniciar</button>
         <button id="exportTxt" class="secondary">Exportar TXT</button>
@@ -37,6 +40,72 @@
       <button id="send">Enviar</button>
     </footer>
   </main>
+
+  <!-- Modal: Termo de Uso (aceite obrigatório no primeiro uso) -->
+  <div id="consentOverlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+    <div class="modal">
+      <div class="modalHead">
+        <h2 id="consentTitle">Termo de Uso — IZA (resumo)</h2>
+        <p class="modalSub">Para usar a IZA, é preciso aceitar este termo.</p>
+      </div>
+
+      <div id="consentBody" class="modalBody">
+        <p><strong>A IZA</strong> é uma ferramenta de escrita reflexiva criada para ajudar você a <strong>pensar para escrever</strong>, por meio de perguntas feitas a partir do que você mesmo(a) escreve.</p>
+
+        <p>Ao utilizar a IZA, você concorda que:</p>
+        <ul>
+          <li>a IZA <strong>não escreve por você</strong> e <strong>não substitui sua autoria</strong>;</li>
+          <li>a responsabilidade pelo texto produzido é <strong>inteiramente sua</strong>;</li>
+          <li>a IZA não oferece aconselhamento terapêutico, jurídico ou diagnóstico.</li>
+        </ul>
+
+        <p>A IZA atua com compromisso ético e educacional, respeitando:</p>
+        <ul>
+          <li>a diversidade cultural brasileira;</li>
+          <li>as Leis nº <strong>10.639/2003</strong> e <strong>11.645/2008</strong>;</li>
+          <li>o respeito às identidades <strong>LGBTQIA+</strong>;</li>
+          <li>a tolerância religiosa e os direitos humanos.</li>
+        </ul>
+
+        <p><strong>Proteção de dados (LGPD – Lei nº 13.709/2018)</strong></p>
+        <p>
+          A IZA respeita a legislação brasileira de proteção de dados pessoais.
+          Os textos produzidos não são utilizados para fins comerciais nem para identificação individual dos(as) usuários(as).
+        </p>
+
+        <p>
+          Caso algum trecho toque temas sensíveis (raça, gênero, religião, identidade), a IZA poderá
+          <strong>sugerir revisão cuidadosa</strong>, sempre de forma educativa e respeitosa.
+          A decisão final é <strong>sempre sua</strong>.
+        </p>
+
+        <p class="modalFooter">
+          Projeto do <strong>Cordel 2.0</strong> — <strong>www.cordel2pontozero.com</strong><br/>
+          Contato: contato@cordel2pontozero.com
+        </p>
+      </div>
+
+      <div class="modalActions">
+        <label class="checkRow">
+          <input type="checkbox" id="consentCheck"/>
+          <span>Li e concordo com o Termo de Uso.</span>
+        </label>
+
+        <label class="checkRow">
+          <input type="checkbox" id="pedagogicCheck"/>
+          <span>
+            Autorizo o uso dos textos que eu produzir <strong>para fins pedagógicos e educacionais</strong>,
+            conforme a LGPD (Lei nº 13.709/2018).
+          </span>
+        </label>
+
+        <div class="btnRow">
+          <button id="consentDecline" class="secondary">Não aceitar</button>
+          <button id="consentAccept" disabled>Continuar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="app.js"></script>
 </body>
