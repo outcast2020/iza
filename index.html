@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ELIZA de Escrita (PT) — Sprint & 7 Etapas</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1>ELIZA de Escrita</h1>
+        <p>Perguntas a partir do que você diz — treino de pensar para escrever.</p>
+      </div>
+
+      <div class="controls">
+        <label class="select">
+          Modo
+          <select id="mode">
+            <option value="sprint">Sprint (4 turnos)</option>
+            <option value="path7">Percurso (7 etapas)</option>
+          </select>
+        </label>
+
+        <button id="restart" class="secondary">Reiniciar</button>
+        <button id="exportTxt" class="secondary">Exportar TXT</button>
+        <button id="exportPdf" class="secondary">Exportar PDF</button>
+        <button id="emailDraft" class="secondary">Abrir e-mail</button>
+      </div>
+    </header>
+
+    <section id="chat" class="chat" aria-live="polite"></section>
+
+    <footer class="composer">
+      <textarea id="input" rows="3" placeholder="Escreva aqui (1–3 frases). Enter envia. Shift+Enter quebra linha."></textarea>
+      <button id="send">Enviar</button>
+    </footer>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
