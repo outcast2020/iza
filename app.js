@@ -1,5 +1,6 @@
 import { RULES } from "./rules.js";
 import { MODES } from "./stages.js";
+import { pickSpice } from "./spice.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -8,6 +9,9 @@ const state = {
   stageIndex: 0,
   history: [], // {stageId, stageTitle, userText}
   started: false,
+
+  // evita repetição do tempero
+  lastSpiceTag: null,
 };
 
 // ---- Consentimento (Termo + LGPD) ----
@@ -41,6 +45,7 @@ function blockUI(isBlocked) {
   $("#openTerms").disabled = false; // transparência sempre disponível
 }
 
+// ---- Texto / helpers ----
 function normalize(text) {
   return text.trim().replace(/\s+/g, " ");
 }
@@ -100,6 +105,28 @@ function connectTwoSnippets() {
   return `\n\nConecte: **“${pickSnippet(b)}”** + **“${pickSnippet(a)}”**. Qual é a relação?`;
 }
 
+// “Tempero” literário (sem citações literais)
+function maybeAddSpice() {
+  // Ajuste aqui a frequência:
+  const chance = 0.30; // 30%
+
+  // Você pode decidir limitar a aparição:
+  // - só no modo path7
+  // - ou só a partir de certa etapa
+  // Vou deixar flexível:
+  const shouldConsider =
+    (state.modeId === "path7" && state.stageIndex >= 1) ||
+    (state.modeId === "sprint" && state.stageIndex >= 1);
+
+  if (!shouldConsider) return "";
+  if (Math.random() > chance) return "";
+
+  const spice = pickSpice(state.lastSpiceTag);
+  state.lastSpiceTag = spice.tag;
+
+  return `\n\n_<strong>Tempero Iza</strong> (${spice.tag}):_ ${spice.text}`;
+}
+
 function buildElizaMirror(userText) {
   const { rule, groups } = chooseRule(userText);
   const response = rule.responses[Math.floor(Math.random() * rule.responses.length)];
@@ -157,7 +184,10 @@ function nextTurn(userText) {
   const nextPrompt = buildStagePrompt();
   let reply = `${mirror}\n\n${nextPrompt}`;
 
-  // conectar a partir da etapa 2
+  // adiciona tempero (opcional)
+  reply += maybeAddSpice();
+
+  // conectar a partir da etapa 2 (conforme stages.js)
   if (stage.connect) reply += connectTwoSnippets();
 
   addMessage("bot", reply);
@@ -167,6 +197,9 @@ function reset() {
   state.stageIndex = 0;
   state.history = [];
   state.started = true;
+
+  // zera memória de tempero ao reiniciar
+  state.lastSpiceTag = null;
 
   $("#chat").innerHTML = "";
   $("#input").disabled = false;
@@ -222,7 +255,6 @@ function openEmailDraft() {
       .join("\n") + "\n" + buildFinalWritingPlan().replace(/\*\*/g, "")
   );
 
-  // opcional: deixar vazio para o usuário escolher o destinatário
   const to = "";
   window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
 }
@@ -248,7 +280,6 @@ function showConsentModal(mode = "required") {
     ? "Transparência: você pode rever este termo a qualquer momento."
     : "Para usar a IZA, é preciso aceitar este termo.";
 
-  // Em view-only: esconder checkboxes e botão continuar; botão vira "Fechar"
   checkWrap.style.display = isViewOnly ? "none" : "flex";
   pedWrap.style.display = isViewOnly ? "none" : "flex";
 
@@ -306,7 +337,6 @@ function showConsentModal(mode = "required") {
       );
     });
   } else {
-    // view-only
     decline.addEventListener("click", () => {
       closeConsentOverlay();
     });
