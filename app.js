@@ -131,7 +131,9 @@ function pickSpiceFromAllowed(allowedTags) {
 function maybeAddSpice() {
   // Frequência: ajuste aqui
   const chance = state.modeId === "path7" ? 0.45 : 0.25; // 7 etapas mais “temperado”
-  if (Math.random() > chance) return "";
+  // sempre tempera
+// (ou, se preferir: sempre em path7 e às vezes em sprint)
+if (state.modeId !== "path7" && Math.random() > chance) return "";
 
   // Você pode decidir quando começar a temperar (ex.: após a primeira resposta)
   const n = stageNumberForSpice();
