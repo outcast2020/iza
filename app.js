@@ -9,9 +9,7 @@ const state = {
   stageIndex: 0,
   history: [], // {stageId, stageTitle, userText}
   started: false,
-
-  // evita repetição do tempero
-  lastSpiceTag: null,
+  lastSpiceTag: null, // evita repetição do tempero
 };
 
 // ---- Consentimento (Termo + LGPD) ----
@@ -21,15 +19,12 @@ const PEDAGOGIC_KEY = "iza_pedagogic_consent_v1";
 function hasConsent() {
   return localStorage.getItem(CONSENT_KEY) === "accepted";
 }
-
 function setConsentAccepted() {
   localStorage.setItem(CONSENT_KEY, "accepted");
 }
-
 function setPedagogicConsent(isAccepted) {
   localStorage.setItem(PEDAGOGIC_KEY, isAccepted ? "accepted" : "declined");
 }
-
 export function allowPedagogicUse() {
   return localStorage.getItem(PEDAGOGIC_KEY) === "accepted";
 }
@@ -42,19 +37,19 @@ function blockUI(isBlocked) {
   $("#exportPdf").disabled = isBlocked;
   $("#emailDraft").disabled = isBlocked;
   $("#mode").disabled = isBlocked;
-  $("#openTerms").disabled = false; // transparência sempre disponível
+
+  // transparência sempre disponível:
+  $("#openTerms").disabled = false;
 }
 
 // ---- Texto / helpers ----
 function normalize(text) {
   return text.trim().replace(/\s+/g, " ");
 }
-
 function pickSnippet(text, maxLen = 90) {
   const t = normalize(text);
   return t.length > maxLen ? t.slice(0, maxLen) + "…" : t;
 }
-
 function chooseRule(text) {
   for (const rule of RULES) {
     const m = text.match(rule.pattern);
@@ -62,7 +57,6 @@ function chooseRule(text) {
   }
   return { rule: RULES[RULES.length - 1], groups: [text] };
 }
-
 function format(template, groups) {
   return template.replace(/\{(\d+)\}/g, (_, i) => pickSnippet(groups[Number(i)] ?? ""));
 }
@@ -70,7 +64,6 @@ function format(template, groups) {
 function currentMode() {
   return MODES[state.modeId];
 }
-
 function currentStage() {
   return currentMode().stages[state.stageIndex];
 }
@@ -105,31 +98,9 @@ function connectTwoSnippets() {
   return `\n\nConecte: **“${pickSnippet(b)}”** + **“${pickSnippet(a)}”**. Qual é a relação?`;
 }
 
-// “Tempero” literário (sem citações literais)
-function stageNumberForSpice() {
-  // Nós chamamos o tempero após incrementar stageIndex em nextTurn(),
-  // então a "etapa recém-respondida" é state.stageIndex (1-based conceitual).
-  // Ex.: após responder etapa 1, stageIndex vira 1.
-  return state.stageIndex; // 1,2,3...
-}
-
+// ---- Tempero por etapa ----
 function pickSpiceFromAllowed(allowedTags) {
-  // tenta algumas vezes até acertar um tempero do conjunto permitido
-  for (let i = 0; i < 12; i++) {
-    const spice = pickSpice(state.lastSpiceTag);
-    if (allowedTags.includes(spice.tag)) {
-      state.lastSpiceTag = spice.tag;
-      return spice;
-    }
-  }
-  // fallback: qualquer um (mas ainda evita repetir a mesma tag imediatamente)
-  const fallback = pickSpice(state.lastSpiceTag);
-  state.lastSpiceTag = fallback.tag;
-  return fallback;
-}
-
-function pickSpiceFromAllowed(allowedTags) {
-  // tenta algumas vezes até acertar um tempero do conjunto permitido
+  // tenta algumas vezes até acertar tag do conjunto permitido
   for (let i = 0; i < 14; i++) {
     const spice = pickSpice(state.lastSpiceTag);
     if (allowedTags.includes(spice.tag)) {
@@ -137,62 +108,48 @@ function pickSpiceFromAllowed(allowedTags) {
       return spice;
     }
   }
-  // fallback: qualquer um (ainda evita repetir tag imediatamente)
+  // fallback: qualquer um
   const fallback = pickSpice(state.lastSpiceTag);
   state.lastSpiceTag = fallback.tag;
   return fallback;
 }
 
 function allowedSpiceTagsForStage(modeId, stageId) {
-  // Mapeamento coerente com o seu stages.js
   if (modeId === "sprint") {
     switch (stageId) {
-      case 1: // Foco (núcleo)
-        return ["Drummond", "Ritmo"];
-      case 2: // Tensão
-        return ["Drummond", "Voz"];
-      case 3: // Concretização (exemplo/cena)
-        return ["Imagem", "Adélia"];
-      case 4: // Tese
-        return ["Ritmo", "Voz"];
-      default:
-        return ["Ritmo", "Voz", "Imagem"];
+      case 1: return ["Drummond", "Ritmo"];       // Foco (núcleo)
+      case 2: return ["Drummond", "Voz"];         // Tensão
+      case 3: return ["Imagem", "Adélia"];        // Concretização (cena)
+      case 4: return ["Ritmo", "Voz"];            // Tese
+      default: return ["Ritmo", "Voz", "Imagem"];
     }
   }
 
   // path7
   switch (stageId) {
-    case 1: // Tema-núcleo
-      return ["Drummond", "Ritmo"];
-    case 2: // Tensão / problema
-      return ["Drummond", "Voz"];
-    case 3: // Intenção do autor
-      return ["Voz", "Ritmo"];
-    case 4: // Cena concreta
-      return ["Imagem", "Adélia"];
-    case 5: // Suposição escondida
-      return ["Cuidado", "Evaristo"];
-    case 6: // Contra-ideia
-      return ["Cuidado", "Evaristo"];
-    case 7: // Tese + próximo parágrafo
-      return ["Ritmo", "Voz", "Drummond"];
-    default:
-      return ["Ritmo", "Voz", "Imagem"];
+    case 1: return ["Drummond", "Ritmo"];         // Tema-núcleo
+    case 2: return ["Drummond", "Voz"];           // Tensão / problema
+    case 3: return ["Voz", "Ritmo"];              // Intenção do autor
+    case 4: return ["Imagem", "Adélia"];          // Cena concreta
+    case 5: return ["Cuidado", "Evaristo"];       // Suposição escondida
+    case 6: return ["Cuidado", "Evaristo"];       // Contra-ideia
+    case 7: return ["Ritmo", "Voz", "Drummond"];  // Tese + próximo parágrafo
+    default: return ["Ritmo", "Voz", "Imagem"];
   }
 }
 
 function maybeAddSpice(lastAnsweredStageId) {
-  // Frequência: mais “temperado” no path7
+  // Ajuste a frequência:
   const chance = state.modeId === "path7" ? 0.45 : 0.25;
   if (Math.random() > chance) return "";
 
-  // Curadoria por etapa (baseada no stages.js)
   const allowed = allowedSpiceTagsForStage(state.modeId, lastAnsweredStageId);
   const spice = pickSpiceFromAllowed(allowed);
 
   return `\n\n_<strong>Tempero Iza</strong> (${spice.tag}):_ ${spice.text}`;
 }
 
+// ---- Core do chat ----
 function buildElizaMirror(userText) {
   const { rule, groups } = chooseRule(userText);
   const response = rule.responses[Math.floor(Math.random() * rule.responses.length)];
@@ -237,6 +194,7 @@ function nextTurn(userText) {
 
   const mirror = buildElizaMirror(clean);
 
+  // avança etapa
   state.stageIndex += 1;
 
   if (isFinished()) {
@@ -250,7 +208,7 @@ function nextTurn(userText) {
   const nextPrompt = buildStagePrompt();
   let reply = `${mirror}\n\n${nextPrompt}`;
 
-  // adiciona tempero (opcional)
+  // tempero por etapa respondida
   reply += maybeAddSpice(stage.id);
 
   // conectar a partir da etapa 2 (conforme stages.js)
@@ -263,8 +221,6 @@ function reset() {
   state.stageIndex = 0;
   state.history = [];
   state.started = true;
-
-  // zera memória de tempero ao reiniciar
   state.lastSpiceTag = null;
 
   $("#chat").innerHTML = "";
@@ -278,6 +234,7 @@ function reset() {
   );
 }
 
+// ---- Export ----
 function exportText() {
   const mode = currentMode();
   const lines = [];
@@ -308,7 +265,6 @@ function exportText() {
 }
 
 function exportPdfSimple() {
-  // PDF “simples” = usa a impressão do navegador com @media print
   window.print();
 }
 
@@ -316,46 +272,49 @@ function openEmailDraft() {
   const mode = currentMode();
   const subject = encodeURIComponent(`IZA — Escrita Reflexiva — ${mode.name}`);
   const body = encodeURIComponent(
-    state.history
-      .map((h) => `${h.stageTitle}:\n${h.userText}\n`)
-      .join("\n") + "\n" + buildFinalWritingPlan().replace(/\*\*/g, "")
+    state.history.map((h) => `${h.stageTitle}:\n${h.userText}\n`).join("\n") +
+    "\n" + buildFinalWritingPlan().replace(/\*\*/g, "")
   );
-
   const to = "";
   window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
 }
 
-function closeConsentOverlay() {
-  $("#consentOverlay").classList.remove("show");
+// ---- Modal ----
+function openOverlay() {
+  const overlay = $("#consentOverlay");
+  overlay.hidden = false;
+  overlay.classList.add("show");
+  overlay.focus?.();
 }
 
-// Modal com 2 modos:
-// - required: bloqueia e exige aceite do termo
-// - view: só mostra (transparência), sem bloquear
-function showConsentModal(mode = "required") {
+function closeOverlay() {
   const overlay = $("#consentOverlay");
+  overlay.classList.remove("show");
+  overlay.hidden = true;
+}
+
+function showConsentModal(mode = "required") {
+  const isViewOnly = mode === "view";
+  const overlay = $("#consentOverlay");
+
   const checkWrap = $("#consentCheck").parentElement;
   const pedWrap = $("#pedagogicCheck").parentElement;
 
-  const isViewOnly = mode === "view";
-
-  overlay.classList.add("show");
-
-  // Ajustes de UI conforme modo
   $(".modalSub").textContent = isViewOnly
     ? "Transparência: você pode rever este termo a qualquer momento."
     : "Para usar a IZA, é preciso aceitar este termo.";
 
+  // view-only: esconde checkboxes e botão continuar; botão vira “Fechar”
   checkWrap.style.display = isViewOnly ? "none" : "flex";
   pedWrap.style.display = isViewOnly ? "none" : "flex";
 
-  const btnDecline = $("#consentDecline");
-  const btnAccept = $("#consentAccept");
+  $("#consentAccept").style.display = isViewOnly ? "none" : "inline-block";
+  $("#consentDecline").textContent = isViewOnly ? "Fechar" : "Não aceitar";
 
-  btnDecline.textContent = isViewOnly ? "Fechar" : "Não aceitar";
-  btnAccept.style.display = isViewOnly ? "none" : "inline-block";
+  // sempre abre overlay no topo (mesmo se CSS falhar)
+  openOverlay();
 
-  // Evita acumular listeners: clona botões e inputs
+  // Evita acumular listeners: clonar elementos interativos
   const oldCheck = $("#consentCheck");
   const oldPed = $("#pedagogicCheck");
   const oldDecline = $("#consentDecline");
@@ -383,6 +342,7 @@ function showConsentModal(mode = "required") {
 
     blockUI(true);
 
+    // habilita botão de forma direta
     check.addEventListener("change", () => {
       accept.disabled = !check.checked;
     });
@@ -390,7 +350,7 @@ function showConsentModal(mode = "required") {
     accept.addEventListener("click", () => {
       setConsentAccepted();
       setPedagogicConsent(pedagogic.checked);
-      closeConsentOverlay();
+      closeOverlay();
       blockUI(false);
       reset();
     });
@@ -399,16 +359,17 @@ function showConsentModal(mode = "required") {
       addMessage(
         "bot",
         "Sem o aceite do Termo de Uso, a IZA não pode iniciar.\n\n" +
-          "Se você quiser usar a IZA, marque a caixa de concordância e toque em **Continuar**."
+        "Se você quiser usar a IZA, marque a caixa de concordância e toque em **Continuar**."
       );
     });
   } else {
     decline.addEventListener("click", () => {
-      closeConsentOverlay();
+      closeOverlay();
     });
   }
 }
 
+// ---- UI wiring ----
 function wireUI() {
   $("#mode").addEventListener("change", (e) => {
     state.modeId = e.target.value;
@@ -435,6 +396,14 @@ function wireUI() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       $("#send").click();
+    }
+  });
+
+  // ESC fecha o termo somente no modo view (transparência).
+  // No modo required, ESC não fecha (para garantir aceite).
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && hasConsent()) {
+      closeOverlay();
     }
   });
 }
